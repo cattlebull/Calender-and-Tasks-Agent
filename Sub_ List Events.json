@@ -1,0 +1,100 @@
+{
+  "name": "Sub: List Events",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "const events = $input.all();\nif (!events || events.length === 0 || !events[0].json.id) {\n  return [{ json: { output: 'You have no events scheduled for today.' } }];\n}\nconst lines = events.map(e => {\n  const start = e.json.start?.dateTime || e.json.start?.date || '';\n  const time = start.includes('T')\n    ? new Date(start).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' })\n    : 'All day';\n  return `• ${e.json.summary || 'Untitled'} at ${time}`;\n});\nreturn [{ json: { output: \"Today's events:\\n\" + lines.join('\\n') } }];"
+      },
+      "id": "ae19ac2d-f8cc-418d-95a6-d8a2e11d3936",
+      "name": "Format Events",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "c99ac33e-24b1-4f5e-aaea-c22259f14de8",
+      "name": "When Executed by Another Workflow"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "prasanna.nevamind@gmail.com",
+          "mode": "list",
+          "cachedResultName": "prasanna.nevamind@gmail.com"
+        },
+        "returnAll": true,
+        "timeMax": "={{ $now.plus({ days: 1 }) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "0ff48df9-b5dd-48eb-899e-529ca1e796e8",
+      "name": "Get many events",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "nbBFkARzfJDRxQhC",
+          "name": "Google Calendar account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Get many events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get many events": {
+      "main": [
+        [
+          {
+            "node": "Format Events",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "4bcbdd10-dc09-4fdb-860d-6b64e8484f10",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "324b1066dc5219f991cd6571b92f889de946120d15b48a518fa6310e2ee6dceb"
+  },
+  "id": "EwwMAEm7WKgP76nz",
+  "tags": []
+}

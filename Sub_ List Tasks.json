@@ -1,0 +1,92 @@
+{
+  "name": "Sub: List Tasks",
+  "nodes": [
+    {
+      "parameters": {
+        "task": "MDM0ODM1MTc1NzA3NDk2NzQ2MzM6MDow",
+        "additionalFields": {}
+      },
+      "id": "9fdbff3f-b71e-4f96-8738-e5f10c11d0a8",
+      "name": "Google Tasks: List Tasks",
+      "type": "n8n-nodes-base.googleTasks",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "googleTasksOAuth2Api": {
+          "id": "LpMhEdJknoynS6sS",
+          "name": "Google Tasks account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const tasks = $input.all();\nif (!tasks || tasks.length === 0 || !tasks[0].json.id) {\n  return [{ json: { output: 'No open tasks. All clear!' } }];\n}\nconst lines = tasks.map(t => {\n  const due = t.json.due\n    ? ` (due ${new Date(t.json.due).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata' })})`\n    : '';\n  return `• ${t.json.title}${due}`;\n});\nreturn [{ json: { output: 'Your open tasks:\\n' + lines.join('\\n') } }];"
+      },
+      "id": "edb4c745-2466-44eb-8c98-47d042bdc5c1",
+      "name": "Format Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        0
+      ],
+      "id": "1a417c99-db46-4d77-931f-cf0ba06fc3fa",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Tasks: List Tasks": {
+      "main": [
+        [
+          {
+            "node": "Format Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Google Tasks: List Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "78c6a22a-6ebf-4ef5-8da3-263ad7c982a0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "324b1066dc5219f991cd6571b92f889de946120d15b48a518fa6310e2ee6dceb"
+  },
+  "id": "t8Duy93avNFJ0mQ8",
+  "tags": []
+}

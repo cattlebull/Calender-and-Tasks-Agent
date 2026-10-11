@@ -1,0 +1,96 @@
+{
+  "name": "Sub: Create Task",
+  "nodes": [
+    {
+      "parameters": {
+        "task": "MDM0ODM1MTc1NzA3NDk2NzQ2MzM6MDow",
+        "title": "={{ $('Execute Trigger').first().json.title }}",
+        "additionalFields": {
+          "dueDate": "={{ $('Execute Trigger').first().json.due_date }}",
+          "notes": "={{ $('Execute Trigger').first().json.notes }}"
+        }
+      },
+      "id": "3a8033a1-fefb-447b-88bf-3db93c0c5f88",
+      "name": "Google Tasks: Create Task",
+      "type": "n8n-nodes-base.googleTasks",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "googleTasksOAuth2Api": {
+          "id": "LpMhEdJknoynS6sS",
+          "name": "Google Tasks account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const task = $input.first().json;\nlet msg = `Got it! Task \"${task.title}\" added.`;\nif (task.due) {\n  const due = new Date(task.due).toLocaleDateString('en-IN', {\n    weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'\n  });\n  msg += ` Due ${due}.`;\n}\nreturn [{ json: { output: msg } }];"
+      },
+      "id": "c295584d-7833-4699-b93d-246b1061342a",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -32,
+        0
+      ],
+      "id": "c89ce47b-a7db-495d-ae33-a60cb02cb493",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Tasks: Create Task": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Google Tasks: Create Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "59ddfa71-a09f-4526-9474-a5e7900c0b35",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "324b1066dc5219f991cd6571b92f889de946120d15b48a518fa6310e2ee6dceb"
+  },
+  "id": "6VmoTkBok3T0KlsU",
+  "tags": []
+}

@@ -1,0 +1,155 @@
+{
+  "name": "Sub: Update Task",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "task": "MDM0ODM1MTc1NzA3NDk2NzQ2MzM6MDow",
+        "returnAll": true,
+        "additionalFields": {}
+      },
+      "id": "8f8259e4-d32c-4f48-b2ed-2b6f23e620d0",
+      "name": "List All Tasks",
+      "type": "n8n-nodes-base.googleTasks",
+      "typeVersion": 1,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "googleTasksOAuth2Api": {
+          "id": "LpMhEdJknoynS6sS",
+          "name": "Google Tasks account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const triggerData = $('Execute Trigger').first().json;\nconst tasks = $input.all();\n\nif (!tasks || tasks.length === 0) {\n  return [{ json: { error: true, output: 'No tasks found in your list.' } }];\n}\n\n// Find best matching task by title (case-insensitive partial match)\nconst searchQuery = (triggerData.search_query || '').toLowerCase();\nconst match = tasks.find(t => \n  t.json.title?.toLowerCase().includes(searchQuery)\n);\n\nif (!match) {\n  return [{ json: { error: true, output: `No task found matching \"${triggerData.search_query}\". Check the task name and try again.` } }];\n}\n\nconst updates = {};\nif (triggerData.new_title) updates.title = triggerData.new_title;\nif (triggerData.new_due_date) updates.due = triggerData.new_due_date;\nif (triggerData.new_notes !== undefined) updates.notes = triggerData.new_notes;\nif (triggerData.mark_complete === true || triggerData.mark_complete === 'true') {\n  updates.status = 'completed';\n  updates.completed = new Date().toISOString();\n}\n\nreturn [{ json: { taskId: match.json.id, updates, originalTitle: match.json.title } }];"
+      },
+      "id": "41879645-ed31-4068-a1af-8aa869c484ea",
+      "name": "Find and Prepare",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "task": "MDM0ODM1MTc1NzA3NDk2NzQ2MzM6MDow",
+        "taskId": "={{ $json.taskId }}",
+        "updateFields": {
+          "notes": "={{ $json.updates.notes || '' }}",
+          "status": "={{ $json.updates.status || 'needsAction' }}",
+          "title": "={{ $json.updates.title || '' }}"
+        }
+      },
+      "id": "357b1f00-5cee-41ae-adbf-021e6f8bf5c5",
+      "name": "Google Tasks: Update Task",
+      "type": "n8n-nodes-base.googleTasks",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "googleTasksOAuth2Api": {
+          "id": "LpMhEdJknoynS6sS",
+          "name": "Google Tasks account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const task = $input.first().json;\nconst triggerData = $('Execute Trigger').first().json;\nlet msg = '';\nif (triggerData.mark_complete === true || triggerData.mark_complete === 'true') {\n  msg = `Task \"${task.title}\" marked as complete. Nice work!`;\n} else {\n  msg = `Task \"${task.title}\" updated successfully.`;\n  if (task.due) {\n    const due = new Date(task.due).toLocaleDateString('en-IN', {\n      weekday: 'short', day: 'numeric', month: 'short', timeZone: 'Asia/Kolkata'\n    });\n    msg += ` Due ${due}.`;\n  }\n}\nreturn [{ json: { output: msg } }];"
+      },
+      "id": "5a9e60c4-3441-44d9-9199-d6e4140bbf6f",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0c03c0d9-e030-4d94-8a77-d5a3c21e18c6",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "List All Tasks": {
+      "main": [
+        [
+          {
+            "node": "Find and Prepare",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Find and Prepare": {
+      "main": [
+        [
+          {
+            "node": "Google Tasks: Update Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Tasks: Update Task": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "List All Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "a799cfcb-8767-4117-a3ff-6c1c36c8edf1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "324b1066dc5219f991cd6571b92f889de946120d15b48a518fa6310e2ee6dceb"
+  },
+  "id": "sN84fKKO5c7kTnOQ",
+  "tags": []
+}

@@ -1,0 +1,170 @@
+{
+  "name": "Sub: Update Calendar Event",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "prasanna.nevamind@gmail.com",
+          "mode": "list",
+          "cachedResultName": "prasanna.nevamind@gmail.com"
+        },
+        "limit": 5,
+        "timeMin": "={{ new Date().toISOString() }}",
+        "timeMax": "={{ $now.plus({ weeks: 1 }).toISO() }}",
+        "options": {
+          "query": "={{ $json.search_query }}"
+        }
+      },
+      "id": "dac2760b-c527-48e5-a480-019976a3a7a0",
+      "name": "Search Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        224,
+        0
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "nbBFkARzfJDRxQhC",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $input.first().json;\nconst allItems = $input.all();\n\n// Get the original input passed to this sub-workflow\nconst triggerData = $('Execute Trigger').first().json;\n\nif (!allItems || allItems.length === 0 || !allItems[0].json.id) {\n  return [{ json: { error: true, output: `No event found matching \"${triggerData.search_query}\". Please check the event name.` } }];\n}\n\n// Pick the first match\nconst event = allItems[0].json;\nconst updates = {};\n\n// Only include fields the AI provided\nif (triggerData.new_title) updates.summary = triggerData.new_title;\nif (triggerData.new_start_datetime) updates.start = { dateTime: triggerData.new_start_datetime, timeZone: 'Asia/Kolkata' };\nif (triggerData.new_end_datetime) updates.end = { dateTime: triggerData.new_end_datetime, timeZone: 'Asia/Kolkata' };\nif (triggerData.new_description !== undefined) updates.description = triggerData.new_description;\n\nreturn [{ json: { eventId: event.id, updates, originalSummary: event.summary } }];"
+      },
+      "id": "af05a202-6135-444b-a7cd-4e3022c844f1",
+      "name": "Prepare Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "calendar": {
+          "__rl": true,
+          "value": "prasanna.nevamind@gmail.com",
+          "mode": "list",
+          "cachedResultName": "prasanna.nevamind@gmail.com"
+        },
+        "eventId": "={{ $json.eventId }}",
+        "updateFields": {
+          "description": "={{ $json.updates.description || '' }}",
+          "end": "={{ $json.updates.end?.dateTime || '' }}",
+          "start": "={{ $json.updates.start?.dateTime || '' }}",
+          "summary": "={{ $json.updates.summary || '' }}"
+        }
+      },
+      "id": "eb43ec2d-3443-4a73-85b8-62c3b42b4b72",
+      "name": "Google Calendar: Update Event",
+      "type": "n8n-nodes-base.googleCalendar",
+      "typeVersion": 1.3,
+      "position": [
+        672,
+        0
+      ],
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "nbBFkARzfJDRxQhC",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const updated = $input.first().json;\nconst start = updated.start?.dateTime || updated.start?.date || '';\nlet timeStr = '';\nif (start.includes('T')) {\n  timeStr = new Date(start).toLocaleString('en-IN', {\n    weekday: 'short', day: 'numeric', month: 'short',\n    hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata'\n  });\n}\nreturn [{ json: { output: `Updated! \"${updated.summary}\" is now set for ${timeStr || 'the new time'}.` } }];"
+      },
+      "id": "bd680a3f-4e85-42ac-b64b-a169ce2e0733",
+      "name": "Format Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "inputSource": "passthrough"
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "32bbb8fa-23c9-4530-8c3c-7e9cd61e684c",
+      "name": "When Executed by Another Workflow"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Search Event": {
+      "main": [
+        [
+          {
+            "node": "Prepare Update",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Update": {
+      "main": [
+        [
+          {
+            "node": "Google Calendar: Update Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Calendar: Update Event": {
+      "main": [
+        [
+          {
+            "node": "Format Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When Executed by Another Workflow": {
+      "main": [
+        [
+          {
+            "node": "Search Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "86e14b8d-b7d1-4671-8d29-19fe3fbf2b28",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "324b1066dc5219f991cd6571b92f889de946120d15b48a518fa6310e2ee6dceb"
+  },
+  "id": "NSvV01UywfY64QOx",
+  "tags": []
+}

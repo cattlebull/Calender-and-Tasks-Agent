@@ -1,0 +1,410 @@
+{
+  "name": "Calendar and Tasks Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "a06c51d9-dfca-48a4-8854-00824b2ee072",
+      "name": "Chat Trigger",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "personal-assistant-chat"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a personal assistant for a user in Chennai, India (timezone: Asia/Kolkata, UTC+5:30).\n\nYou manage their Google Calendar and Google Tasks through 6 tools:\n- create_calendar_event — add a new event\n- list_todays_events — show today's schedule\n- update_calendar_event — change an existing event\n- create_task — add a new task\n- list_tasks — show open tasks\n- update_task — change or complete a task\n\nRULES:\n- Always pick exactly ONE tool per request\n- Resolve relative dates (today, tomorrow, friday) to real ISO 8601 dates with +05:30 offset\n- Default event time to 09:00 IST if none given, default duration to 1 hour\n- Only ask ONE short question if critical info is missing\n- When a tool returns a result, output it EXACTLY as returned — do not rephrase, summarize, or add words\n- Never call a list tool when user wants to create, never call create when user wants to update\n- Current date and time: {{ new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }) }}\n- Keep replies short and plain text, no markdown\n\nThe current user input:\n{{ $json.chatInput }}",
+        "options": {}
+      },
+      "id": "eb751fcd-f8e0-43ce-863d-757bddc8265b",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 1.7,
+      "position": [
+        224,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "name": "list_todays_events",
+        "description": "Shows all events on the calendar for TODAY. Use when user asks what is on their schedule or wants to see their calendar.",
+        "workflowId": {
+          "__rl": true,
+          "value": "EwwMAEm7WKgP76nz",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/EwwMAEm7WKgP76nz",
+          "cachedResultName": "Sub: List Events"
+        },
+        "responsePropertyName": "=output",
+        "fields": {
+          "values": []
+        }
+      },
+      "id": "105ecadf-0a60-4fc4-8f21-cf83fcf16ee1",
+      "name": "Tool: List Events",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        432,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "name": "update_calendar_event",
+        "description": "Updates an EXISTING calendar event. Use when user wants to CHANGE, RESCHEDULE, EDIT, or RENAME an event.",
+        "workflowId": {
+          "__rl": true,
+          "value": "NSvV01UywfY64QOx",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/NSvV01UywfY64QOx",
+          "cachedResultName": "Sub: Update Calendar Event"
+        },
+        "responsePropertyName": "=output",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query",
+              "type": "string"
+            },
+            {
+              "name": "new_start_datetime",
+              "type": "string"
+            },
+            {
+              "name": "new_end_datetime",
+              "type": "string"
+            },
+            {
+              "name": "new_description",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "38285d14-930e-4269-9bbe-d2e8e21a6961",
+      "name": "Tool: Update Event",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        592,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "name": "create_task",
+        "description": "Adds a NEW task to Google Tasks. Use when user wants to ADD, CREATE, or REMEMBER a task or to-do.",
+        "workflowId": {
+          "__rl": true,
+          "value": "6VmoTkBok3T0KlsU",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/6VmoTkBok3T0KlsU",
+          "cachedResultName": "Sub: Create Task"
+        },
+        "responsePropertyName": "output",
+        "fields": {
+          "values": [
+            {
+              "name": "title",
+              "type": "string"
+            },
+            {
+              "name": "due_date",
+              "type": "string"
+            },
+            {
+              "name": "notes",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "6c17f5db-9d94-40f2-b3c0-ea8ab5a92a19",
+      "name": "Tool: Create Task",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        752,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "name": "list_tasks",
+        "description": "Shows all open tasks from Google Tasks. Use when user asks to SEE their tasks or to-do list.",
+        "workflowId": {
+          "__rl": true,
+          "value": "t8Duy93avNFJ0mQ8",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/t8Duy93avNFJ0mQ8",
+          "cachedResultName": "Sub: List Tasks"
+        },
+        "responsePropertyName": "output",
+        "fields": {
+          "values": []
+        }
+      },
+      "id": "f68d4b76-3cb3-49b6-ba10-2dbcbff12e1a",
+      "name": "Tool: List Tasks",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "name": "update_task",
+        "description": "Updates an EXISTING task. Use when user wants to CHANGE a task title, due date, or notes, or MARK a task as DONE, COMPLETE, or FINISHED.",
+        "workflowId": {
+          "__rl": true,
+          "value": "sN84fKKO5c7kTnOQ",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/sN84fKKO5c7kTnOQ",
+          "cachedResultName": "Sub: Update Task"
+        },
+        "responsePropertyName": "output",
+        "fields": {
+          "values": [
+            {
+              "name": "search_query",
+              "type": "string"
+            },
+            {
+              "name": "new_title",
+              "type": "string"
+            },
+            {
+              "name": "new_due_date",
+              "type": "string"
+            },
+            {
+              "name": "new_notes",
+              "type": "string"
+            },
+            {
+              "name": "mark_complete",
+              "type": "boolean"
+            }
+          ]
+        }
+      },
+      "id": "9865b904-60d4-4f64-8e8c-843708b2f613",
+      "name": "Tool: Update Task",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        1056,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "description": "Adds a NEW event to Google Calendar. Use when user wants to SCHEDULE, ADD, or CREATE an event, meeting, or appointment.",
+        "workflowId": {
+          "__rl": true,
+          "value": "zuHB5LWYWoAQwaq8",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/zuHB5LWYWoAQwaq8",
+          "cachedResultName": "Sub: Create Calendar Event"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "title": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('title', ``, 'string') }}",
+            "start_datetime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('start_datetime', ``, 'string') }}",
+            "end_datetime": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('end_datetime', ``, 'string') }}",
+            "description": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('description', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "title",
+              "displayName": "title",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "start_datetime",
+              "displayName": "start_datetime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "end_datetime",
+              "displayName": "end_datetime",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "description",
+              "displayName": "description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        288,
+        224
+      ],
+      "id": "b34d8319-7021-4ce2-8643-a0e2a7e2a24a",
+      "name": "Tool: Create event"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "67ffd8e5-4e56-4f22-84c6-de447826f185",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "wqFCRPlzaiKcZvEm",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Chat Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: List Events": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Update Event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Create Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: List Tasks": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Update Task": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tool: Create event": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner",
+    "availableInMCP": false
+  },
+  "versionId": "f0f97a92-0d8d-44c4-b14a-61425bdd2bb9",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "324b1066dc5219f991cd6571b92f889de946120d15b48a518fa6310e2ee6dceb"
+  },
+  "id": "bASua9TwZoULdd8U",
+  "tags": []
+}
